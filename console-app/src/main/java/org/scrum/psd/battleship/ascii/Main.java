@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Random;
 import java.util.Scanner;
 import java.util.Collection;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Main {
     private static List<Ship> myFleet;
@@ -199,30 +201,6 @@ public class Main {
     }
 
     private static void InitializeMyFleet() {
-//        myFleet = GameController.initializeShips();
-//
-//        myFleet.get(0).getPositions().add(new Position(Letter.B, 4));
-//        myFleet.get(0).getPositions().add(new Position(Letter.B, 5));
-//        myFleet.get(0).getPositions().add(new Position(Letter.B, 6));
-//        myFleet.get(0).getPositions().add(new Position(Letter.B, 7));
-//        myFleet.get(0).getPositions().add(new Position(Letter.B, 8));
-//
-//        myFleet.get(1).getPositions().add(new Position(Letter.E, 6));
-//        myFleet.get(1).getPositions().add(new Position(Letter.E, 7));
-//        myFleet.get(1).getPositions().add(new Position(Letter.E, 8));
-//        myFleet.get(1).getPositions().add(new Position(Letter.E, 9));
-//
-//        myFleet.get(2).getPositions().add(new Position(Letter.A, 3));
-//        myFleet.get(2).getPositions().add(new Position(Letter.B, 3));
-//        myFleet.get(2).getPositions().add(new Position(Letter.C, 3));
-//
-//        myFleet.get(3).getPositions().add(new Position(Letter.F, 8));
-//        myFleet.get(3).getPositions().add(new Position(Letter.G, 8));
-//        myFleet.get(3).getPositions().add(new Position(Letter.H, 8));
-//
-//        myFleet.get(4).getPositions().add(new Position(Letter.C, 5));
-//        myFleet.get(4).getPositions().add(new Position(Letter.C, 6));
-
         Scanner scanner = new Scanner(System.in);
         myFleet = GameController.initializeShips();
 
@@ -231,6 +209,7 @@ public class Main {
         int k = 0;
 
         for (Ship ship : myFleet) {
+
             if(k == 0) {
                 console = new ColoredPrinter.Builder(1, false).background(Ansi.BColor.BLUE).build();
             } else if(k == 1) {
@@ -243,16 +222,54 @@ public class Main {
                 console = new ColoredPrinter.Builder(1, false).background(Ansi.BColor.CYAN).build();
             }
 
-            console.println("");
-            console.println(String.format("Please enter the positions for the %s (size: %s)", ship.getName(), ship.getSize()));
+            Ship processShip = assignShip(ship);
+
+            while(!processShip.isPlaced()){
+                List<Position> resetPositions = new ArrayList<Position>();
+                ship.setPositions(resetPositions);
+                chess = new String[8][8];
+                for (int r=0; r<chess.length; r++) {
+                    for (int c=0; c<chess[r].length; c++) {
+                        chess[r][c]="-";//your value
+                    }
+                }
+                processShip = assignShip(ship);
+            };
+
+            k++;
+        }
+        console.clear();
+    }
 
 
-            for (int i = 1; i <= ship.getSize(); i++) {
-                console.println(String.format("Enter position %s of %s (i.e A3):", i, ship.getSize()));
-                String positionInput = validate(scanner.next());
-                ship.addPosition(positionInput);
+    private static Ship assignShip(Ship ship) {
+
+        Scanner scanner = new Scanner(System.in);
+
+        console.println("");
+        console.println(String.format("Please enter the positions for the %s (size: %s)", ship.getName(), ship.getSize()));
+
+        List<Position> positions = new ArrayList<Position>();
+
+        for (int i = 1; i <= ship.getSize(); i++) {
+            console.println(String.format("Enter position %s of %s (i.e A3):", i, ship.getSize()));
+            String positionInput = validate(scanner.next());
+            positions.add(parsePosition(positionInput));
+
+            if(i == ship.getSize()) {
+                ship.setPositions(positions);
+
+                if(ship.getPositions().get(0).getRow() != ship.getPositions().get(1).getRow()) {
+                    if(ship.getPositions().get(0).getColumn() != ship.getPositions().get(1).getColumn()) {
+                        console.println("You can only place your ship hoizontally or vertically. ",  Ansi.Attribute.BOLD, Ansi.FColor.RED, Ansi.BColor.BLUE);
+                        ship.setPlaced(false);
+                    } else {
+                        ship.setPlaced(true);
+                    }
+                }
 
                 for (Position position : ship.getPositions()) {
+
                     switch (position.getColumn()) {
                         case A:
                             chess[0][position.getRow()-1]="X";
@@ -283,49 +300,91 @@ public class Main {
                     }
                 }
 
-                console.print(ANSI_GREEN+"   1 2 3 4 5 6 7 8");console.println("");
-                for (int r=0; r<chess.length; r++) {
-                    switch (r) {
-                        case 0:
-                            console.print(ANSI_GREEN+"A| ");
-                            break;
-                        case 1:
-                            console.print(ANSI_GREEN+"B| ");
-                            break;
-                        case 2:
-                            console.print(ANSI_GREEN+"C| ");
-                            break;
-                        case 3:
-                            console.print(ANSI_GREEN+"D| ");
-                            break;
-                        case 4:
-                            console.print(ANSI_GREEN+"E| ");
-                            break;
-                        case 5:
-                            console.print(ANSI_GREEN+"F| ");
-                            break;
-                        case 6:
-                            console.print(ANSI_GREEN+"G| ");
-                            break;
-                        case 7:
-                            console.print(ANSI_GREEN+"H| ");
-                            break;
-                        default:
-                            break;
+                if(!ship.isPlaced()) {
+                    console.print(ANSI_GREEN+"   1 2 3 4 5 6 7 8",  Ansi.Attribute.BOLD, Ansi.FColor.RED, Ansi.BColor.BLUE);console.println("",  Ansi.Attribute.BOLD, Ansi.FColor.RED, Ansi.BColor.BLUE);
+                    for (int r=0; r<chess.length; r++) {
+                        switch (r) {
+                            case 0:
+                                console.print(ANSI_GREEN+"A| ",  Ansi.Attribute.BOLD, Ansi.FColor.RED, Ansi.BColor.BLUE);
+                                break;
+                            case 1:
+                                console.print(ANSI_GREEN+"B| ",  Ansi.Attribute.BOLD, Ansi.FColor.RED, Ansi.BColor.BLUE);
+                                break;
+                            case 2:
+                                console.print(ANSI_GREEN+"C| ",  Ansi.Attribute.BOLD, Ansi.FColor.RED, Ansi.BColor.BLUE);
+                                break;
+                            case 3:
+                                console.print(ANSI_GREEN+"D| ",  Ansi.Attribute.BOLD, Ansi.FColor.RED, Ansi.BColor.BLUE);
+                                break;
+                            case 4:
+                                console.print(ANSI_GREEN+"E| ",  Ansi.Attribute.BOLD, Ansi.FColor.RED, Ansi.BColor.BLUE);
+                                break;
+                            case 5:
+                                console.print(ANSI_GREEN+"F| ",  Ansi.Attribute.BOLD, Ansi.FColor.RED, Ansi.BColor.BLUE);
+                                break;
+                            case 6:
+                                console.print(ANSI_GREEN+"G| ",  Ansi.Attribute.BOLD, Ansi.FColor.RED, Ansi.BColor.BLUE);
+                                break;
+                            case 7:
+                                console.print(ANSI_GREEN+"H| ",  Ansi.Attribute.BOLD, Ansi.FColor.RED, Ansi.BColor.BLUE);
+                                break;
+                            default:
+                                break;
+                        }
+                        for (int c=0; c<chess[r].length; c++) {
+                            if(c==7)
+                                console.println(ANSI_GREEN+chess[r][c],  Ansi.Attribute.BOLD, Ansi.FColor.RED, Ansi.BColor.BLUE);
+                            else{
+                                console.print(ANSI_GREEN+chess[r][c]+" ",  Ansi.Attribute.BOLD, Ansi.FColor.RED, Ansi.BColor.BLUE);
+                            }
+                        }
                     }
-                    for (int c=0; c<chess[r].length; c++) {
-                        if(c==7)
-                            console.println(ANSI_GREEN+chess[r][c]);
-                        else{
-                            console.print(ANSI_GREEN+chess[r][c]+" ");
+                } else {
+
+                    console.print(ANSI_GREEN+"   1 2 3 4 5 6 7 8");console.println("");
+                    for (int r=0; r<chess.length; r++) {
+                        switch (r) {
+                            case 0:
+                                console.print(ANSI_GREEN+"A| ");
+                                break;
+                            case 1:
+                                console.print(ANSI_GREEN+"B| ");
+                                break;
+                            case 2:
+                                console.print(ANSI_GREEN+"C| ");
+                                break;
+                            case 3:
+                                console.print(ANSI_GREEN+"D| ");
+                                break;
+                            case 4:
+                                console.print(ANSI_GREEN+"E| ");
+                                break;
+                            case 5:
+                                console.print(ANSI_GREEN+"F| ");
+                                break;
+                            case 6:
+                                console.print(ANSI_GREEN+"G| ");
+                                break;
+                            case 7:
+                                console.print(ANSI_GREEN+"H| ");
+                                break;
+                            default:
+                                break;
+                        }
+                        for (int c=0; c<chess[r].length; c++) {
+                            if(c==7)
+                                console.println(ANSI_GREEN+chess[r][c]);
+                            else{
+                                console.print(ANSI_GREEN+chess[r][c]+" ");
+                            }
                         }
                     }
                 }
             }
-
-            k++;
         }
-        console.clear();
+
+        return ship;
+
     }
 
     private static void InitializeEnemyFleet() {
